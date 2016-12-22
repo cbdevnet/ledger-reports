@@ -1,0 +1,6 @@
+--input-date-format %Y-%m-%d 
+--date-format %Y-%m-%d 
+--sort date
+--no-pager
+--strict
+--no-color

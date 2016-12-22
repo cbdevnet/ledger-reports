@@ -1,0 +1,42 @@
+#!/bin/bash
+
+set -ex
+
+## Generate ledger-cli reports
+# Requires at least ledger 3
+# Other prerequisites
+#	gnuplot and the gnuplot scripts from this repo
+#	piechart (https://github.com/cbdevnet/piechart)
+#	A matching ledgerrc (see this repo)
+
+# Run as ./report <ledger file>
+# Resulting graphs will be placed in the reports/ directory
+# The script uses the following categories
+#	Assets
+#	Expenses
+#	Liabilities
+#	Income
+#	Expenses:Food
+
+# Assume ledger file if none given
+export LEDGER_FILE=${1:-"main.ledger"}
+
+# Get current date and ledger command
+DATE=$(date +%Y%m%d)
+LEDGER="ledger --init-file ./ledgerrc"
+
+# The gnuplot scripts accept the following parameters
+#	SVGTITLE	Title of the SVG document
+#	TITLE		Title of the image
+#	LEGEND		Chart legend text
+
+export LEGEND="Assets"
+$LEDGER -F "%d |%T\n" -Wn register Assets | SVGTITLE="WeeklyAssets" TITLE="Assets, weekly" ./single.gnuplot > reports/$DATE-Assets-Weekly.svg
+$LEDGER -F "%d |%T\n" -n register Assets | SVGTITLE="Assets" TITLE="Assets, all TX" ./single.gnuplot > reports/$DATE-Assets.svg
+
+$LEDGER -F "%d |%T\n" -n register Assets Liabilities | SVGTITLE="Worth" TITLE="Worth (Assets vs Liabilities), all TX" LEGEND="Worth" ./single.gnuplot > reports/$DATE-Worth.svg
+$LEDGER --amount-data --collapse --monthly register ^Income ^Expenses | SVGTITLE="InOut" TITLE="Income vs Expenses" LEGEND="Expenses (Positive implies overspending)" ./single-bar.gnuplot > reports/$DATE-inout.svg
+$LEDGER --amount-data --collapse --monthly register ^Expenses:Food | SVGTITLE="Food" TITLE="Food Expenses" LEGEND="Expenses:Food" ./single-bar.gnuplot > reports/$DATE-Food.svg
+
+$LEDGER --depth 2 --balance-format "%T|%A\n" balance Expenses | tail -n +2 | head -n -1 | piechart --delimiter "|" --order value,legend --color random > reports/$DATE-Expense-Pie.svg
+$LEDGER --depth 2 --balance-format "%T|%A\n" balance Assets | tail -n +2 | head -n -1 | piechart --delimiter "|" --order value,legend --color random > reports/$DATE-AssetsOverview-Pie.svg
