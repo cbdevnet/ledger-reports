@@ -23,40 +23,43 @@ export LEDGER_FILE=${1:-"main.ledger"}
 
 # Get current date and ledger command
 DATE=$(date +%Y%m%d)
+FILEPREFIX="$DATE"
 LEDGER="ledger --init-file ./ledgerrc"
 
-plot(){
+plot_stdin(){
 # The gnuplot scripts accept the following parameters
 #	SVGTITLE	Title of the SVG document
 #	TITLE		Title of the image
 #	LEGEND		Chart legend text
 
-	printf "%s" "$1" | xargs $LEDGER | $2
+	printf "%s" "$1" | xargs $LEDGER | gnuplot script.gnuplot -e "$2"
 }
 
 line(){
-	plot "$1" "./single.gnuplot"
+	plot_stdin "$1" 'plot "<cat" using 1:2 with linespoints title "".LEGEND'
 }
 
 bar(){
-	plot "$1" "./single-bar.gnuplot"
+	plot_stdin "$1" 'set boxwidth 0.95 relative; plot "<cat" using 1:2 with boxes lc rgb"blue" fs solid 0.25 title "".LEGEND'
 }
 
 SVGTITLE="WeeklyAssets"	TITLE="Assets, weekly"	LEGEND="Assets" \
-	line "--total-data --weekly --collapse --market register Assets" > reports/$DATE-Assets-Weekly.svg
+	line "--total-data --weekly --collapse --market register Assets" > reports/$FILEPREFIX-Assets-Weekly.svg
 SVGTITLE="Assets" 	TITLE="Assets, all TX"	LEGEND="Assets" \
 	line "--total-data --collapse --market register Assets" > reports/$DATE-Assets.svg
 SVGTITLE="Equity" 	TITLE="Equity, all TX"	LEGEND="Liquid Assets vs Liabilities" \
-	line "--total-data --collapse register Assets:Liquid Liabilities" > reports/$DATE-Equity.svg
+	line "--total-data --collapse register Assets:Liquid Liabilities" > reports/$FILEPREFIX-Equity.svg
 
 SVGTITLE="Balance"	TITLE="Monthly Balance"	LEGEND="Expenses (Positive implies overspending)" \
-	bar "--amount-data --collapse --monthly register ^Income ^Expenses" > reports/$DATE-Balance-Monthly.svg
+	bar "--amount-data --collapse --monthly register ^Income ^Expenses" > reports/$FILEPREFIX-Balance-Monthly.svg
 
 SVGTITLE="Food"		TITLE="Food Expenses"	LEGEND="Expenses:Food" \
-	bar "--amount-data --collapse --monthly register ^Expenses:Food" > reports/$DATE-Food-Monthly.svg
+	bar "--amount-data --collapse --monthly register ^Expenses:Food" > reports/$FILEPREFIX-Food-Monthly.svg
 
 SVGTITLE="Expenses"	TITLE="Monthly Expenses" LEGEND="Expenses" \
-	line "--amount-data --collapse --monthly register Expenses" > reports/$DATE-Expenses-Monthly.svg
+	line "--amount-data --collapse --monthly register Expenses" > reports/$FILEPREFIX-Expenses-Monthly.svg
 
-$LEDGER --depth 2 --balance-format "%T|%A\n" balance Expenses | tail -n +2 | head -n -1 | piechart --delimiter "|" --order value,legend --color random > reports/$DATE-Expense-Pie.svg
-$LEDGER --depth 2 --balance-format "%T|%A\n" balance Assets | tail -n +2 | head -n -1 | piechart --delimiter "|" --order value,legend --color random > reports/$DATE-AssetsOverview-Pie.svg
+$LEDGER --depth 2 --balance-format "%T|%A\n" --no-total balance Expenses | tail -n +2 | piechart --delimiter "|" --order value,legend --color random > reports/$FILEPREFIX-Expense-Pie.svg
+$LEDGER --depth 2 --balance-format "%T|%A\n" --market --no-total balance Assets | tail -n +2 | piechart --delimiter "|" --order value,legend --color random > reports/$FILEPREFIX-AssetsOverview-Pie.svg
+$LEDGER --related --balance-format "%T|%A\n" --no-total balance Income | tail -n +2 | piechart --delimiter "|" --order value,legend --color random > reports/$FILEPREFIX-IncomeTargets-Pie.svg
+
