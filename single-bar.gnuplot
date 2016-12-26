@@ -8,6 +8,7 @@ set xdata time
 set boxwidth 0.95 relative
 set title "".TITLE
 set timefmt "%Y-%m-%d"
+set format x "%Y-%m-%d"
 set autoscale
 set xzeroaxis
 plot "<cat" using 1:2 with boxes lc rgb"blue" fs solid 0.25 title "".LEGEND
