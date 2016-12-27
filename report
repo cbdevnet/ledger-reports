@@ -9,46 +9,104 @@ set -ex
 #	piechart (https://github.com/cbdevnet/piechart)
 #	A matching ledgerrc (see this repo)
 
-# Run as ./report <ledger file>
+# Run as ./report <ledger file> [periods <period expressions>]
 # Resulting graphs will be placed in the reports/ directory
 # The script uses the following categories
 #	Assets
+#	Assets:Liquid
 #	Expenses
+#	Expenses:Food
 #	Liabilities
 #	Income
-#	Expenses:Food
+
+# The periodic feature is experimental and might not work exactly as expected
+#	Reporting periods must be exactly equal-width buckets.
+#	This also includes things such as dates without a transaction,
+#	making --daily probably a bad window. --weekly usually works OK.
+#	The periodic report will create the same type of graphs from
+#	the same queries as the regular report, but will try to
+#	plot the data for every period as its own line.
+#	Data which can not reliably be segmented into equal-width
+#	periods should be plotted with the _aperiodic functions,
+#	which always produce the same plot.
 
 # Assume ledger file if none given
 export LEDGER_FILE=${1:-"main.ledger"}
+export MODE=${2:-"complete"}
 
 # Get current date and ledger command
 DATE=$(date +%Y%m%d)
 FILEPREFIX="$DATE"
 LEDGER="ledger --init-file ./ledgerrc"
 
+# Store all reporting periods when requested
+if [ "$MODE" == "periods" ]; then
+	DATADIR=$(mktemp -d)
+	FILEPREFIX="$FILEPREFIX-Periodic"
+	PERIODS=()
+	while [ -n "$3" ]; do
+		PERIODS+=($3)
+		shift
+	done
+
+	printf "Report range: %s\n" "${PERIODS[@]}"
+fi
+
 plot_stdin(){
 # The gnuplot scripts accept the following parameters
 #	SVGTITLE	Title of the SVG document
+#			(and, in periodic reports, the data filename)
 #	TITLE		Title of the image
 #	LEGEND		Chart legend text
 
 	printf "%s" "$1" | xargs $LEDGER | gnuplot script.gnuplot -e "$2"
 }
 
-line(){
+plot_periodic(){
+	printf "plot " > "$DATADIR/$SVGTITLE.gnuplot"
+	touch "$DATADIR/$SVGTITLE.data.in"
+	touch "$DATADIR/$SVGTITLE.data"
+	LINE=2
+	for period in "${PERIODS[@]}"; do
+		LINEPREFIX=",\\"
+		if [ "$LINE" == "2" ]; then
+			LINEPREFIX="\\"
+		fi
+		printf -- "--period %s %s" "$period" "$1" | xargs $LEDGER | paste "$DATADIR/$SVGTITLE.data.in" - > "$DATADIR/$SVGTITLE.data"
+		printf '%s\n"%s" using 1:%s title "%s" with %s' "$LINEPREFIX" "$DATADIR/$SVGTITLE.data" "$LINE" "$LEGEND [$period]" "$2"  >> "$DATADIR/$SVGTITLE.gnuplot"
+		LINE=$(($LINE + 2))
+		cp "$DATADIR/$SVGTITLE.data" "$DATADIR/$SVGTITLE.data.in"
+	done
+	gnuplot script.gnuplot "$DATADIR/$SVGTITLE.gnuplot"
+}
+
+# Can only create periodic graphs from periodic data
+line_aperiodic(){
 	plot_stdin "$1" 'plot "<cat" using 1:2 with linespoints title "".LEGEND'
 }
 
+line(){
+	if [ "$MODE" == "periods" ]; then
+		plot_periodic "$1" "linespoints"
+	else
+		plot_stdin "$1" 'plot "<cat" using 1:2 with linespoints title "".LEGEND'
+	fi
+}
+
 bar(){
-	plot_stdin "$1" 'set boxwidth 0.95 relative; plot "<cat" using 1:2 with boxes lc rgb"blue" fs solid 0.25 title "".LEGEND'
+	if [ "$MODE" == "periods" ]; then
+		plot_periodic "$1" "boxes"
+	else
+		plot_stdin "$1" 'set boxwidth 0.95 relative; plot "<cat" using 1:2 with boxes lc rgb"blue" fs solid 0.25 title "".LEGEND'
+	fi
 }
 
 SVGTITLE="WeeklyAssets"	TITLE="Assets, weekly"	LEGEND="Assets" \
 	line "--total-data --weekly --collapse --market register Assets" > reports/$FILEPREFIX-Assets-Weekly.svg
 SVGTITLE="Assets" 	TITLE="Assets, all TX"	LEGEND="Assets" \
-	line "--total-data --collapse --market register Assets" > reports/$DATE-Assets.svg
-SVGTITLE="Equity" 	TITLE="Equity, all TX"	LEGEND="Liquid Assets vs Liabilities" \
-	line "--total-data --collapse register Assets:Liquid Liabilities" > reports/$FILEPREFIX-Equity.svg
+	line_aperiodic "--total-data --collapse --market register Assets" > reports/$DATE-Assets.svg
+SVGTITLE="Equity" 	TITLE="Equity, weekly"	LEGEND="Liquid Assets vs Liabilities" \
+	line "--total-data --collapse --weekly register Assets:Liquid Liabilities" > reports/$FILEPREFIX-Equity.svg
 
 SVGTITLE="Balance"	TITLE="Monthly Balance"	LEGEND="Expenses (Positive implies overspending)" \
 	bar "--amount-data --collapse --monthly register ^Income ^Expenses" > reports/$FILEPREFIX-Balance-Monthly.svg
@@ -58,8 +116,13 @@ SVGTITLE="Food"		TITLE="Food Expenses"	LEGEND="Expenses:Food" \
 
 SVGTITLE="Expenses"	TITLE="Monthly Expenses" LEGEND="Expenses" \
 	line "--amount-data --collapse --monthly register Expenses" > reports/$FILEPREFIX-Expenses-Monthly.svg
+SVGTITLE="Income"	TITLE="Monthly Income"	LEGEND="Income" \
+	line "--amount-data --collapse --monthly register Income" > reports/$FILEPREFIX-Income-Monthly.svg
 
 $LEDGER --depth 2 --balance-format "%T|%A\n" --no-total balance Expenses | tail -n +2 | piechart --delimiter "|" --order value,legend --color random > reports/$FILEPREFIX-Expense-Pie.svg
 $LEDGER --depth 2 --balance-format "%T|%A\n" --market --no-total balance Assets | tail -n +2 | piechart --delimiter "|" --order value,legend --color random > reports/$FILEPREFIX-AssetsOverview-Pie.svg
 $LEDGER --related --balance-format "%T|%A\n" --no-total balance Income | tail -n +2 | piechart --delimiter "|" --order value,legend --color random > reports/$FILEPREFIX-IncomeTargets-Pie.svg
 
+if [ -n "$DATADIR" ]; then
+	rm -rf "$DATADIR"
+fi
