@@ -10,3 +10,10 @@ set timefmt "%Y-%m-%d"
 set format x "%Y-%m-%d"
 set autoscale
 set xzeroaxis
+set boxwidth 0.95 relative
+set style fill solid 0.25 border
+set style line 1 lw 1 lc rgb "blue"
+set style line 2 lw 1 lc rgb "red"
+set style line 3 lw 1 lc rgb "black"
+set style line 4 lw 1 lc rgb "sea-green"
+set style increment user

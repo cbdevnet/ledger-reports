@@ -59,7 +59,7 @@ plot_stdin(){
 #	TITLE		Title of the image
 #	LEGEND		Chart legend text
 
-	printf "%s" "$1" | xargs $LEDGER | gnuplot script.gnuplot -e "$2"
+	printf "%s" "$1" | xargs $LEDGER | gnuplot script.gnuplot -e "plot '<cat' using 1:2 with $2 title ''.LEGEND"
 }
 
 plot_periodic(){
@@ -82,14 +82,14 @@ plot_periodic(){
 
 # Can only create periodic graphs from periodic data
 line_aperiodic(){
-	plot_stdin "$1" 'plot "<cat" using 1:2 with linespoints title "".LEGEND'
+	plot_stdin "$1" 'linespoints'
 }
 
 line(){
 	if [ "$MODE" == "periods" ]; then
 		plot_periodic "$1" "linespoints"
 	else
-		plot_stdin "$1" 'plot "<cat" using 1:2 with linespoints title "".LEGEND'
+		plot_stdin "$1" 'linespoints'
 	fi
 }
 
@@ -97,7 +97,7 @@ bar(){
 	if [ "$MODE" == "periods" ]; then
 		plot_periodic "$1" "boxes"
 	else
-		plot_stdin "$1" 'set boxwidth 0.95 relative; plot "<cat" using 1:2 with boxes lc rgb"blue" fs solid 0.25 title "".LEGEND'
+		plot_stdin "$1" 'boxes'
 	fi
 }
 
