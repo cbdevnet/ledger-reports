@@ -20,9 +20,12 @@ set -ex
 #	Income
 
 # The periodic feature is experimental and might not work exactly as expected
-#	Reporting periods must be exactly equal-width buckets.
-#	This also includes things such as dates without a transaction,
-#	making --daily probably a bad window. --weekly usually works OK.
+#	Reporting periods must be exactly equal-width buckets, meaning
+#	that the query result must have the exact same number of lines.
+#	This also includes things such as dates without a transaction (a problem
+#	which may be sidestepped by using --empty) and leap years,
+#	making --daily probably a bad window. --weekly --empty is probably a good
+#	minimum interval.
 #	The periodic report will create the same type of graphs from
 #	the same queries as the regular report, but will try to
 #	plot the data for every period as its own line.
@@ -102,22 +105,22 @@ bar(){
 }
 
 SVGTITLE="WeeklyAssets"	TITLE="Assets, weekly"	LEGEND="Assets" \
-	line "--total-data --weekly --collapse --market register Assets" > reports/$FILEPREFIX-Assets-Weekly.svg
+	line "--total-data --weekly --collapse --empty --market register Assets" > reports/$FILEPREFIX-Assets-Weekly.svg
 SVGTITLE="Assets" 	TITLE="Assets, all TX"	LEGEND="Assets" \
 	line_aperiodic "--total-data --collapse --market register Assets" > reports/$DATE-Assets.svg
 SVGTITLE="Equity" 	TITLE="Equity, weekly"	LEGEND="Liquid Assets vs Liabilities" \
-	line "--total-data --collapse --weekly register Assets:Liquid Liabilities" > reports/$FILEPREFIX-Equity.svg
+	line "--total-data --collapse --empty --weekly register Assets:Liquid Liabilities" > reports/$FILEPREFIX-Equity.svg
 
 SVGTITLE="Balance"	TITLE="Monthly Balance"	LEGEND="Expenses (Positive implies overspending)" \
-	bar "--amount-data --collapse --monthly register ^Income ^Expenses" > reports/$FILEPREFIX-Balance-Monthly.svg
+	bar "--amount-data --collapse --empty --monthly register ^Income ^Expenses" > reports/$FILEPREFIX-Balance-Monthly.svg
 
 SVGTITLE="Food"		TITLE="Food Expenses"	LEGEND="Expenses:Food" \
-	bar "--amount-data --collapse --monthly register ^Expenses:Food" > reports/$FILEPREFIX-Food-Monthly.svg
+	bar "--amount-data --collapse --monthly --empty register ^Expenses:Food" > reports/$FILEPREFIX-Food-Monthly.svg
 
 SVGTITLE="Expenses"	TITLE="Monthly Expenses" LEGEND="Expenses" \
-	line "--amount-data --collapse --monthly register Expenses" > reports/$FILEPREFIX-Expenses-Monthly.svg
+	line "--amount-data --collapse --monthly --empty register Expenses" > reports/$FILEPREFIX-Expenses-Monthly.svg
 SVGTITLE="Income"	TITLE="Monthly Income"	LEGEND="Income" \
-	line "--amount-data --collapse --monthly register Income" > reports/$FILEPREFIX-Income-Monthly.svg
+	line "--amount-data --collapse --monthly --empty register Income" > reports/$FILEPREFIX-Income-Monthly.svg
 
 $LEDGER --depth 2 --balance-format "%T|%A\n" --no-total balance Expenses | tail -n +2 | piechart --delimiter "|" --order value,legend --color random > reports/$FILEPREFIX-Expense-Pie.svg
 $LEDGER --depth 2 --balance-format "%T|%A\n" --market --no-total balance Assets | tail -n +2 | piechart --delimiter "|" --order value,legend --color random > reports/$FILEPREFIX-AssetsOverview-Pie.svg
