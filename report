@@ -105,11 +105,11 @@ bar(){
 }
 
 SVGTITLE="WeeklyAssets"	TITLE="Assets, weekly"	LEGEND="Assets" \
-	line "--total-data --weekly --collapse --empty --market register Assets" > reports/$FILEPREFIX-Assets-Weekly.svg
+	line "--total-data --weekly --collapse --empty --market register ^Assets" > reports/$FILEPREFIX-Assets-Weekly.svg
 SVGTITLE="Assets" 	TITLE="Assets, all TX"	LEGEND="Assets" \
-	line_aperiodic "--total-data --collapse --market register Assets" > reports/$DATE-Assets.svg
-SVGTITLE="Equity" 	TITLE="Equity, weekly"	LEGEND="Liquid Assets vs Liabilities" \
-	line "--total-data --collapse --empty --weekly register Assets:Liquid Liabilities" > reports/$FILEPREFIX-Equity.svg
+	line_aperiodic "--total-data --collapse --market register ^Assets" > reports/$DATE-Assets.svg
+SVGTITLE="Equity" 	TITLE="Equity, weekly"	LEGEND="Liquid ^Assets vs Liabilities" \
+	line "--total-data --collapse --empty --weekly register ^Assets:Liquid Liabilities" > reports/$FILEPREFIX-Equity.svg
 
 SVGTITLE="Balance"	TITLE="Monthly Balance"	LEGEND="Expenses (Positive implies overspending)" \
 	bar "--amount-data --collapse --empty --monthly register ^Income ^Expenses" > reports/$FILEPREFIX-Balance-Monthly.svg
@@ -118,13 +118,13 @@ SVGTITLE="Food"		TITLE="Food Expenses"	LEGEND="Expenses:Food" \
 	bar "--amount-data --collapse --monthly --empty register ^Expenses:Food" > reports/$FILEPREFIX-Food-Monthly.svg
 
 SVGTITLE="Expenses"	TITLE="Monthly Expenses" LEGEND="Expenses" \
-	line "--amount-data --collapse --monthly --empty register Expenses" > reports/$FILEPREFIX-Expenses-Monthly.svg
+	line "--amount-data --collapse --monthly --empty register ^Expenses" > reports/$FILEPREFIX-Expenses-Monthly.svg
 SVGTITLE="Income"	TITLE="Monthly Income"	LEGEND="Income" \
-	line "--amount-data --collapse --monthly --empty register Income" > reports/$FILEPREFIX-Income-Monthly.svg
+	line "--amount-data --collapse --monthly --empty register ^Income" > reports/$FILEPREFIX-Income-Monthly.svg
 
-$LEDGER --depth 2 --balance-format "%T|%A\n" --no-total balance Expenses | tail -n +2 | piechart --delimiter "|" --order value,legend --color random > reports/$FILEPREFIX-Expense-Pie.svg
-$LEDGER --depth 2 --balance-format "%T|%A\n" --market --no-total balance Assets | tail -n +2 | piechart --delimiter "|" --order value,legend --color random > reports/$FILEPREFIX-AssetsOverview-Pie.svg
-$LEDGER --related --balance-format "%T|%A\n" --no-total balance Income | tail -n +2 | piechart --delimiter "|" --order value,legend --color random > reports/$FILEPREFIX-IncomeTargets-Pie.svg
+$LEDGER --depth 2 --balance-format "%-(to_int(display_total))|%-(partial_account)\n" --sort amount --no-total balance ^Expenses | tail -n +2 | piechart --delimiter "|" --order value,legend --color random > reports/$FILEPREFIX-Expense-Pie.svg
+$LEDGER --depth 2 --balance-format "%-(to_int(display_total))|%-(partial_account)\n" --sort amount --market --no-total balance ^Assets | tail -n +2 | piechart --delimiter "|" --order value,legend --color random > reports/$FILEPREFIX-AssetsOverview-Pie.svg
+$LEDGER --related --balance-format "%-(to_int(display_total))|%-(partial_account)\n" --sort amount --no-total balance ^Income | tail -n +2 | piechart --delimiter "|" --order value,legend --color random > reports/$FILEPREFIX-IncomeTargets-Pie.svg
 
 if [ -n "$DATADIR" ]; then
 	rm -rf "$DATADIR"
