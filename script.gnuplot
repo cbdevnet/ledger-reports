@@ -9,7 +9,7 @@ set title "".TITLE
 set timefmt "%Y-%m-%d"
 set format x "%Y-%m-%d"
 set autoscale
-set xzeroaxis
+set xzeroaxis linewidth 2
 set boxwidth 0.95 relative
 set style fill solid 0.25 border
 set style line 1 lw 1 lc rgb "blue"

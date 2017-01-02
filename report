@@ -107,9 +107,9 @@ bar(){
 SVGTITLE="WeeklyAssets"	TITLE="Assets, weekly"	LEGEND="Assets" \
 	line "--total-data --weekly --collapse --empty --market register ^Assets" > reports/$FILEPREFIX-Assets-Weekly.svg
 SVGTITLE="Assets" 	TITLE="Assets, all TX"	LEGEND="Assets" \
-	line_aperiodic "--total-data --collapse --market register ^Assets" > reports/$DATE-Assets.svg
-SVGTITLE="Equity" 	TITLE="Equity, weekly"	LEGEND="Liquid ^Assets vs Liabilities" \
-	line "--total-data --collapse --empty --weekly register ^Assets:Liquid Liabilities" > reports/$FILEPREFIX-Equity.svg
+	line_aperiodic "--total-data --collapse --market register ^Assets" > reports/$FILEPREFIX-Assets.svg
+SVGTITLE="Equity" 	TITLE="Equity, weekly"	LEGEND="Liquid Assets vs Liabilities" \
+	line "--total-data --collapse --empty --weekly register ^Assets:Liquid ^Liabilities" > reports/$FILEPREFIX-Equity.svg
 
 SVGTITLE="Balance"	TITLE="Monthly Balance"	LEGEND="Expenses (Positive implies overspending)" \
 	bar "--amount-data --collapse --empty --monthly register ^Income ^Expenses" > reports/$FILEPREFIX-Balance-Monthly.svg
