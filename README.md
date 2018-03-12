@@ -13,7 +13,15 @@ May not work with multiple commodities, fixes are welcome.
 Creates multiple interesting graphs from the data via [gnuplot](http://www.gnuplot.info/)
 and [piechart](https://github.com/cbdevnet/piechart/).
 
-Designed to be easily extendable with queries interesting to yourself.
+Designed to be easily extendable (by editing it) with queries interesting to yourself.
+
+### Example outputs
+
+![A pie chart, showing asset split](https://raw.githubusercontent.com/cbdevnet/ledger-reports/assets/assets/AssetsOverview-Pie.svg)
+
+![A line chart, showing monthly expenses](https://raw.githubusercontent.com/cbdevnet/ledger-reports/assets/assets/Expenses-Monthly.svg)
+
+![A bar chart, showing monthly food expenses](https://raw.githubusercontent.com/cbdevnet/ledger-reports/assets/assets/Food-Monthly.svg)
 
 ### Requirements
 
@@ -39,6 +47,14 @@ The script uses the following categories in the current state
 * `Expenses:Food`
 * `Liabilities`
 * `Income`
+
+If your ledger file uses a different layout or you want to create new
+graphs, you will have to edit the `report` script. The drawing tool invocations
+are abstracted away to a large degree via bash functions.
+
+Note that the `ledgerrc` file currently contains the *strict* option,
+which requires that all accounts and commodities be pre-announced.
+If you don't want that, remove the option from the file.
 
 ### The `periodic` feature
 
