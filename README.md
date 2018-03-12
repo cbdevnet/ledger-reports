@@ -17,11 +17,11 @@ Designed to be easily extendable (by editing it) with queries interesting to you
 
 ### Example outputs
 
-![A pie chart, showing asset split](https://raw.githubusercontent.com/cbdevnet/ledger-reports/assets/assets/AssetsOverview-Pie.svg)
+![A pie chart, showing asset split](https://raw.githubusercontent.com/cbdevnet/ledger-reports/assets/assets/AssetsOverview-Pie.svg?sanitize=true)
 
-![A line chart, showing monthly expenses](https://raw.githubusercontent.com/cbdevnet/ledger-reports/assets/assets/Expenses-Monthly.svg)
+![A line chart, showing monthly expenses](https://raw.githubusercontent.com/cbdevnet/ledger-reports/assets/assets/Expenses-Monthly.svg?sanitize=true)
 
-![A bar chart, showing monthly food expenses](https://raw.githubusercontent.com/cbdevnet/ledger-reports/assets/assets/Food-Monthly.svg)
+![A bar chart, showing monthly food expenses](https://raw.githubusercontent.com/cbdevnet/ledger-reports/assets/assets/Food-Monthly.svg?sanitize=true)
 
 ### Requirements
 
